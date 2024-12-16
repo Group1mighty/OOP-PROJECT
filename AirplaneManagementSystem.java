@@ -1,7 +1,6 @@
 import java.util.List;
 import java.util.ArrayList;
 
-
 // Abstract class for common attributes and behavior (Abstraction)
 abstract class User {
     private String name;
@@ -201,8 +200,11 @@ class FlightSchedule {
         }
         return matchingFlights;
     }
-}
 
+    public static List<Flight> getFlights() {
+        return flights;
+    }
+}
 
 // Main class to demonstrate functionality
 public class AirplaneManagementSystem {
@@ -253,7 +255,7 @@ class Customer extends User {
         System.out.println("Role: Customer");
     }
 
-    // Method to search and display flights
+    // Search for flights (already implemented)
     public void searchFlights(String origin, String destination) {
         List<Flight> results = FlightSchedule.searchFlights(origin, destination);
         if (results.isEmpty()) {
@@ -266,18 +268,33 @@ class Customer extends User {
         }
     }
 
-    // Method to book a flight
-    public void bookFlight(Flight flight) throws Exception {
-        if (flight.getAvailableSeats() > 0) {
-            flight.setAvailableSeats(flight.getAvailableSeats() - 1);
-            bookings.add(flight);
-            System.out.println("Booking successful: " + flight);
+    // New: Book a flight
+    public void bookFlight(String flightId) throws Exception {
+        Flight selectedFlight = null;
+
+        // Find the flight by ID in the flight schedule
+        for (Flight flight : FlightSchedule.getFlights()) {
+            if (flight.getFlightId().equalsIgnoreCase(flightId)) {
+                selectedFlight = flight;
+                break;
+            }
+        }
+
+        if (selectedFlight == null) {
+            throw new Exception("Flight with ID " + flightId + " not found.");
+        }
+
+        // Check seat availability
+        if (selectedFlight.getAvailableSeats() > 0) {
+            selectedFlight.setAvailableSeats(selectedFlight.getAvailableSeats() - 1);
+            bookings.add(selectedFlight); // Add the flight to customer's bookings
+            System.out.println("Booking successful for flight: " + selectedFlight);
         } else {
-            throw new Exception("No seats available for this flight.");
+            throw new Exception("No seats available for flight ID: " + flightId);
         }
     }
 
-    // Method to view bookings
+    // View customer's bookings
     public void viewBookings() {
         if (bookings.isEmpty()) {
             System.out.println("No bookings found.");
@@ -289,4 +306,3 @@ class Customer extends User {
         }
     }
 }
-
