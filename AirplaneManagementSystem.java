@@ -5,32 +5,54 @@ import java.util.ArrayList;
 abstract class User {
     private String name;
     private String email;
+    private List<Notification> notifications = new ArrayList<>();
 
-    // Constructor
     public User(String name, String email) {
         this.name = name;
         this.email = email;
     }
 
-    // Getters and setters (Encapsulation)
-    public String getName() {
-        return name;
+    // Common methods for notifications
+    public void receiveNotification(String message) {
+        Notification notification = new Notification(message);
+        notifications.add(notification);
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void viewNotifications() {
+        if (notifications.isEmpty()) {
+            System.out.println("No notifications.");
+        } else {
+            System.out.println("Notifications:");
+            for (Notification notification : notifications) {
+                System.out.println("- " + notification);
+            }
+        }
+    }
+
+    public void clearNotifications() {
+        notifications.clear();
+        System.out.println("All notifications cleared.");
+    }
+
+    // Abstract method for roles
+    public abstract void displayRole();
+
+    // Getters and setters
+    public String getName() {
+        return name;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    protected void setName(String name) {
+        this.name = name;
     }
 
-    // Abstract method to be implemented by subclasses
-    public abstract void displayRole();
+    protected void setEmail(String email) {
+        this.email = email;
+    }
 }
 
 // Manager class extending User (Inheritance)
@@ -81,8 +103,31 @@ class Manager extends User {
             System.out.println("----------------------------");
         }
     }
-}
 
+    public void checkLowSeatAvailability(Flight flight) {
+        if (flight.getAvailableSeats() < 10) {
+            receiveNotification(
+                    "Low seats alert: Flight " + flight.getFlightId() + " has less than 10 seats available.");
+        }
+    }
+
+    public void sendDailySummary() {
+        List<Flight> flights = FlightSchedule.getFlights();
+        if (flights.isEmpty()) {
+            receiveNotification("Daily Summary: No flights were booked today.");
+        } else {
+            StringBuilder summary = new StringBuilder("Daily Summary:\n");
+            for (Flight flight : flights) {
+                summary.append("Flight ID: ").append(flight.getFlightId())
+                        .append(", Booked Seats: ")
+                        .append(flight.getTotalSeats() - flight.getAvailableSeats())
+                        .append("\n");
+            }
+            receiveNotification(summary.toString());
+        }
+    }
+
+}
 
 // Encapsulated Flight class
 class Flight {
@@ -95,7 +140,8 @@ class Flight {
     private int totalSeats; // New field
 
     // Constructor
-    public Flight(String flightId, String origin, String destination, String departureTime, String arrivalTime, int totalSeats) {
+    public Flight(String flightId, String origin, String destination, String departureTime, String arrivalTime,
+            int totalSeats) {
         if (totalSeats < 0) {
             throw new IllegalArgumentException("Total seats cannot be negative.");
         }
@@ -108,7 +154,6 @@ class Flight {
         this.totalSeats = totalSeats;
     }
 
-
     // Getters and setters
     public int getTotalSeats() {
         return totalSeats;
@@ -120,6 +165,7 @@ class Flight {
         }
         this.totalSeats = totalSeats;
     }
+
     public String getFlightId() {
         return flightId;
     }
@@ -289,6 +335,11 @@ class Customer extends User {
         System.out.println("Role: Customer");
     }
 
+    @Override
+    public void receiveNotification(String message) {
+        super.receiveNotification("Customer Alert: " + message);
+    }
+
     // Search for flights (already implemented)
     public void searchFlights(String origin, String destination) {
         List<Flight> results = FlightSchedule.searchFlights(origin, destination);
@@ -322,7 +373,8 @@ class Customer extends User {
         if (selectedFlight.getAvailableSeats() > 0) {
             selectedFlight.setAvailableSeats(selectedFlight.getAvailableSeats() - 1);
             bookings.add(selectedFlight); // Add the flight to customer's bookings
-            System.out.println("Booking successful for flight: " + selectedFlight);
+            receiveNotification("Booking confirmed for flight " + selectedFlight.getFlightId() + " from "
+                    + selectedFlight.getOrigin() + " to " + selectedFlight.getDestination());
         } else {
             throw new Exception("No seats available for flight ID: " + flightId);
         }
@@ -363,5 +415,29 @@ class Customer extends User {
                 System.out.println(booking);
             }
         }
+    }
+
+    public void sendFlightReminder() {
+        for (Flight flight : bookings) {
+            receiveNotification("Reminder: Upcoming flight " + flight.getFlightId() + " from " + flight.getOrigin()
+                    + " departs at " + flight.getDepartureTime());
+        }
+    }
+}
+
+class Notification {
+    private String message;
+
+    public Notification(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
+        return message;
     }
 }
