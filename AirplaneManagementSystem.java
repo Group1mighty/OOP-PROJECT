@@ -60,7 +60,29 @@ class Manager extends User {
                 throw new Exception("Invalid action. Use 'add', 'update', or 'cancel'.");
         }
     }
+
+    // Generate report
+    public void generateReport() {
+        List<Flight> flights = FlightSchedule.getFlights();
+        if (flights.isEmpty()) {
+            System.out.println("No flights available for reporting.");
+            return;
+        }
+
+        System.out.println("Flight Reports:");
+        for (Flight flight : flights) {
+            System.out.println("Flight ID: " + flight.getFlightId());
+            System.out.println("Origin: " + flight.getOrigin());
+            System.out.println("Destination: " + flight.getDestination());
+            System.out.println("Departure: " + flight.getDepartureTime());
+            System.out.println("Arrival: " + flight.getArrivalTime());
+            System.out.println("Available Seats: " + flight.getAvailableSeats());
+            System.out.println("Booked Seats: " + (flight.getTotalSeats() - flight.getAvailableSeats()));
+            System.out.println("----------------------------");
+        }
+    }
 }
+
 
 // Encapsulated Flight class
 class Flight {
@@ -70,22 +92,34 @@ class Flight {
     private String departureTime;
     private String arrivalTime;
     private int availableSeats;
+    private int totalSeats; // New field
 
     // Constructor
-    public Flight(String flightId, String origin, String destination, String departureTime, String arrivalTime,
-            int availableSeats) {
-        if (availableSeats < 0) {
-            throw new IllegalArgumentException("Available seats cannot be negative.");
+    public Flight(String flightId, String origin, String destination, String departureTime, String arrivalTime, int totalSeats) {
+        if (totalSeats < 0) {
+            throw new IllegalArgumentException("Total seats cannot be negative.");
         }
         this.flightId = flightId;
         this.origin = origin;
         this.destination = destination;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
-        this.availableSeats = availableSeats;
+        this.availableSeats = totalSeats; // Initially, all seats are available
+        this.totalSeats = totalSeats;
     }
 
+
     // Getters and setters
+    public int getTotalSeats() {
+        return totalSeats;
+    }
+
+    public void setTotalSeats(int totalSeats) {
+        if (totalSeats < 0) {
+            throw new IllegalArgumentException("Total seats cannot be negative.");
+        }
+        this.totalSeats = totalSeats;
+    }
     public String getFlightId() {
         return flightId;
     }
@@ -292,6 +326,31 @@ class Customer extends User {
         } else {
             throw new Exception("No seats available for flight ID: " + flightId);
         }
+    }
+
+    // Cancel a booking
+    public void cancelBooking(String flightId) throws Exception {
+        Flight bookingToCancel = null;
+
+        // Search for the booking in the customer's list
+        for (Flight booking : bookings) {
+            if (booking.getFlightId().equalsIgnoreCase(flightId)) {
+                bookingToCancel = booking;
+                break;
+            }
+        }
+
+        if (bookingToCancel == null) {
+            throw new Exception("No booking found with flight ID: " + flightId);
+        }
+
+        // Increment the available seats for the flight
+        bookingToCancel.setAvailableSeats(bookingToCancel.getAvailableSeats() + 1);
+
+        // Remove the flight from the customer's bookings
+        bookings.remove(bookingToCancel);
+
+        System.out.println("Booking canceled successfully for flight: " + bookingToCancel);
     }
 
     // View customer's bookings
