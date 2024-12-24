@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.ArrayList;
+import java.io.*;
 
 // Abstract class for common attributes and behavior (Abstraction)
 abstract class User {
@@ -55,6 +56,124 @@ abstract class User {
     }
 }
 
+class FileManager {
+
+    private static final String FILE_NAME = "flights.txt";
+
+    // Save all flights to a file
+    public static void saveFlightsToFile(List<Flight> flights, String filename) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename, false))) {
+            File file = new File(filename);
+            
+            // Write header if the file is empty
+            if (!file.exists() || file.length() == 0) {
+                writer.write("FID\tOC\tOAirName\tOLocation\t" +
+                             "DC\tDAirName\tDLocation\t" +
+                             "DTime\tATime\tSeats\tAirplane ID\tAirplane Model");
+                writer.newLine();
+            }
+    
+            // Write the flight data
+            for (Flight flight : flights) {
+                String formattedFlight = formatFlightForFile(flight);
+                writer.write(formattedFlight);  
+                writer.newLine();
+            }
+    
+            System.out.println("Flights saved to file successfully.");
+        } catch (IOException e) {
+            System.out.println("Error saving flights to file: " + e.getMessage());
+        }
+    }
+    
+
+    // Load flights from a file
+    public static List<Flight> loadFlightsFromFile() {
+        List<Flight> flights = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+            String line;
+            boolean isHeader = true;
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim(); // Remove any leading or trailing spaces
+                if (line.isEmpty()) {
+                    continue; // Skip empty lines
+                }
+
+                if (isHeader) {
+                    isHeader = false; // Skip the header line
+                    continue;
+                }
+
+                try {
+                    flights.add(parseFlightFromFile(line));
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Skipped invalid flight data: " + e.getMessage());
+                }
+            }
+            System.out.println("Flights loaded successfully from file: " + FILE_NAME);
+        } catch (IOException e) {
+            System.out.println("Error loading flights from file: " + e.getMessage());
+        }
+
+        return flights;
+    }
+
+    // Delete the file
+    public static void deleteFile() {
+        File file = new File(FILE_NAME);
+        if (file.exists() && file.delete()) {
+            System.out.println("File deleted successfully: " + FILE_NAME);
+        } else {
+            System.out.println("Failed to delete file or file does not exist: " + FILE_NAME);
+        }
+    }
+
+    // Helper method to format a Flight object for saving
+    private static String formatFlightForFile(Flight flight) {
+        return flight.getFlightId() + "\t" +  // FID
+               flight.getOrigin().getAirportCode() + "\t" +  // OC
+               flight.getOrigin().getName() + "\t" +  // OAirName
+               flight.getOrigin().getLocation() + "\t" +  // OLocation
+               flight.getDestination().getAirportCode() + "\t" +  // DC
+               flight.getDestination().getName() + "\t" +  // DAirName
+               flight.getDestination().getLocation() + "\t" +  // DLocation
+               flight.getDepartureTime() + "\t" +  // DTime
+               flight.getArrivalTime() + "\t" +  // ATime
+               flight.getAvailableSeats() + "\t" +  // Seats
+               flight.getAirplane().getAirplaneId() + "\t" +  // Airplane ID
+               flight.getAirplane().getAirplaneModel();  // Airplane Model
+    }
+
+    // Helper method to parse a Flight object from a line in the file
+    private static Flight parseFlightFromFile(String line) {
+        // Split using tabs as the delimiter
+        String[] parts = line.split("\t");
+
+        // Ensure the line has exactly 12 parts (matching the file format)
+        if (parts.length != 12) {
+            throw new IllegalArgumentException("Invalid flight data: " + line);
+        }
+
+        try {
+            // Parse the fields
+            String flightId = parts[0].trim();
+            Airport origin = new Airport(parts[1].trim(), parts[2].trim(), parts[3].trim());
+            Airport destination = new Airport(parts[4].trim(), parts[5].trim(), parts[6].trim());
+            String departureTime = parts[7].trim();
+            String arrivalTime = parts[8].trim();
+            int availableSeats = Integer.parseInt(parts[9].trim());
+            Airplane airplane = new Airplane(parts[10].trim(), parts[11].trim(), availableSeats);
+
+            // Create and return the Flight object
+            return new Flight(flightId, origin, destination, departureTime, arrivalTime, airplane);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error parsing flight data: " + line + " - " + e.getMessage());
+        }
+    }
+}
+
 // Airplane class to represent individual airplanes
 class Airplane {
     private String airplaneId;
@@ -97,6 +216,10 @@ class Airplane {
             throw new IllegalArgumentException("Capacity cannot be negative.");
         }
         this.capacity = capacity;
+    }
+
+    public String getAirplaneModel() {
+        return model;
     }
 
     @Override
@@ -254,10 +377,10 @@ class Flight {
     public String getFlightId() {
         return flightId;
     }
+
     public int getTotalSeats() {
         return totalSeats;
     }
-    
 
     public void setFlightId(String flightId) {
         this.flightId = flightId;
@@ -338,7 +461,6 @@ class FlightSchedule {
         System.out.println("Flight added successfully: " + flight);
     }
 
-
     // Update a flight
     public static void updateFlight(Flight updatedFlight) throws Exception {
         for (int i = 0; i < flights.size(); i++) {
@@ -380,16 +502,22 @@ class FlightSchedule {
         List<Flight> matchingFlights = new ArrayList<>();
         for (Flight flight : flights) {
             if (flight.getOrigin().getAirportCode().equalsIgnoreCase(origin) &&
-                flight.getDestination().getAirportCode().equalsIgnoreCase(destination)) {
+                    flight.getDestination().getAirportCode().equalsIgnoreCase(destination)) {
                 matchingFlights.add(flight);
             }
         }
         return matchingFlights;
     }
-    
 
+    // Getter for the flights
     public static List<Flight> getFlights() {
         return flights;
+    }
+
+    // Setter for the flights
+    public static void setFlights(List<Flight> newFlights) {
+        flights = newFlights;
+        System.out.println("Flight schedule updated successfully.");
     }
 }
 
@@ -397,27 +525,26 @@ class FlightSchedule {
 public class AirplaneManagementSystem {
     public static void main(String[] args) {
         try {
-            // Create some airports
-            Airport airport1 = new Airport("JFK", "John F. Kennedy International Airport", "New York");
-            Airport airport2 = new Airport("LAX", "Los Angeles International Airport", "Los Angeles");
+            // Placeholder for future implementation
 
-            // Create an airplane
-            Airplane airplane1 = new Airplane("A101", "Boeing 747", 300);
+            // Example: Load flights from file
+            List<Flight> loadedFlights = FileManager.loadFlightsFromFile();
+            System.out.println("Loaded Flights:");
+            for (Flight flight : loadedFlights) {
+                System.out.println(flight);
+            }
 
-            // Create a flight using the airplane and airports
-            Flight flight1 = new Flight("F101", airport1, airport2, "10:00 AM", "1:00 PM", airplane1);
+            // Example: Save flights to file (if needed)
+            // FileManager.saveFlightsToFile(FlightSchedule.getFlights(), "flights.txt");
 
-            // Add flight to schedule
-            FlightSchedule.addFlight(flight1);
+            // Example: Delete the file (if needed)
+            // FileManager.deleteFile();
 
-            // List flights
-            FlightSchedule.listFlights();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 }
-
 
 // Customer class extending User (Inheritance)
 class Customer extends User {

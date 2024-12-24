@@ -1,5 +1,5 @@
+import java.util.List;
 import java.util.Scanner;
-
 
 public class Main {
     public static void main(String[] args) {
@@ -7,6 +7,10 @@ public class Main {
 
         Manager manager = new Manager("Alice", "alice@airlines.com");
         Customer customer = new Customer("Bob", "bob@domain.com");
+
+        // Load flights from file at startup
+        List<Flight> flights = FileManager.loadFlightsFromFile();
+        FlightSchedule.setFlights(flights);
 
         while (true) {
             System.out.println("\n==== Airline Management System ====");
@@ -26,6 +30,8 @@ public class Main {
                     customerMenu(customer, scanner);
                     break;
                 case 3:
+                    // Save flights to file before exiting
+                    FileManager.saveFlightsToFile(FlightSchedule.getFlights(),"flights.txt");
                     System.out.println("Exiting the system. Goodbye!");
                     scanner.close();
                     return;
@@ -45,7 +51,9 @@ public class Main {
             System.out.println("4. List All Flights");
             System.out.println("5. View Notifications");
             System.out.println("6. Clear Notifications");
-            System.out.println("7. Back to Main Menu");
+            System.out.println("7. Save Flights to File");
+            System.out.println("8. Load Flights from File");
+            System.out.println("9. Back to Main Menu");
             System.out.print("Choose an option: ");
 
             int choice = scanner.nextInt();
@@ -90,46 +98,43 @@ public class Main {
                         Flight newFlight = new Flight(flightId, origin, destination, departureTime, arrivalTime, airplane);
                         manager.manageFlight(newFlight, "add");
                         break;
-                case 2:
-                    System.out.print("Enter Flight ID to Update: ");
-                    String updateId = scanner.nextLine();
-                
-                    System.out.print("Enter New Origin Airport Code: ");
-                    String newOriginCode = scanner.nextLine();
-                    System.out.print("Enter New Origin Airport Name: ");
-                    String newOriginName = scanner.nextLine();
-                    System.out.print("Enter New Origin Location: ");
-                    String newOriginLocation = scanner.nextLine();
-                    Airport newOrigin = new Airport(newOriginCode, newOriginName, newOriginLocation);
-                
-                    System.out.print("Enter New Destination Airport Code: ");
-                    String newDestinationCode = scanner.nextLine();
-                    System.out.print("Enter New Destination Airport Name: ");
-                    String newDestinationName = scanner.nextLine();
-                    System.out.print("Enter New Destination Location: ");
-                    String newDestinationLocation = scanner.nextLine();
-                    Airport newDestination = new Airport(newDestinationCode, newDestinationName, newDestinationLocation);
-                
-                    System.out.print("Enter New Departure Time: ");
-                    String newDepartureTime = scanner.nextLine();
-                    System.out.print("Enter New Arrival Time: ");
-                    String newArrivalTime = scanner.nextLine();
-                
-                    System.out.print("Enter New Airplane ID: ");
-                    String newAirplaneId = scanner.nextLine();
-                    System.out.print("Enter New Airplane Model: ");
-                    String newAirplaneModel = scanner.nextLine();
-                    System.out.print("Enter New Airplane Capacity: ");
-                    int newCapacity = scanner.nextInt();
-                    scanner.nextLine(); // Consume newline
-                    Airplane newAirplane = new Airplane(newAirplaneId, newAirplaneModel, newCapacity);
-                
-                    // Create updated flight object
-                    Flight updatedFlight = new Flight(updateId, newOrigin, newDestination, newDepartureTime, newArrivalTime, newAirplane);
-                
-                    // Call the manager's method to handle the update
-                    manager.manageFlight(updatedFlight, "update");
-                    break;
+                    case 2:
+                        System.out.print("Enter Flight ID to Update: ");
+                        String updateId = scanner.nextLine();
+
+                        System.out.print("Enter New Origin Airport Code: ");
+                        String newOriginCode = scanner.nextLine();
+                        System.out.print("Enter New Origin Airport Name: ");
+                        String newOriginName = scanner.nextLine();
+                        System.out.print("Enter New Origin Location: ");
+                        String newOriginLocation = scanner.nextLine();
+                        Airport newOrigin = new Airport(newOriginCode, newOriginName, newOriginLocation);
+
+                        System.out.print("Enter New Destination Airport Code: ");
+                        String newDestinationCode = scanner.nextLine();
+                        System.out.print("Enter New Destination Airport Name: ");
+                        String newDestinationName = scanner.nextLine();
+                        System.out.print("Enter New Destination Location: ");
+                        String newDestinationLocation = scanner.nextLine();
+                        Airport newDestination = new Airport(newDestinationCode, newDestinationName, newDestinationLocation);
+
+                        System.out.print("Enter New Departure Time: ");
+                        String newDepartureTime = scanner.nextLine();
+                        System.out.print("Enter New Arrival Time: ");
+                        String newArrivalTime = scanner.nextLine();
+
+                        System.out.print("Enter New Airplane ID: ");
+                        String newAirplaneId = scanner.nextLine();
+                        System.out.print("Enter New Airplane Model: ");
+                        String newAirplaneModel = scanner.nextLine();
+                        System.out.print("Enter New Airplane Capacity: ");
+                        int newCapacity = scanner.nextInt();
+                        scanner.nextLine(); // Consume newline
+                        Airplane newAirplane = new Airplane(newAirplaneId, newAirplaneModel, newCapacity);
+
+                        Flight updatedFlight = new Flight(updateId, newOrigin, newDestination, newDepartureTime, newArrivalTime, newAirplane);
+                        manager.manageFlight(updatedFlight, "update");
+                        break;
                     case 3:
                         System.out.print("Enter Flight ID to Cancel: ");
                         String cancelId = scanner.nextLine();
@@ -145,6 +150,14 @@ public class Main {
                         manager.clearNotifications();
                         break;
                     case 7:
+                    FileManager.saveFlightsToFile(FlightSchedule.getFlights(), "flights.txt");
+                        break;
+                    case 8:
+                        List<Flight> loadedFlights = FileManager.loadFlightsFromFile();
+                        FlightSchedule.setFlights(loadedFlights);
+                        System.out.println("Flights loaded from file.");
+                        break;
+                    case 9:
                         return;
                     default:
                         System.out.println("Invalid choice. Please try again.");
@@ -212,4 +225,3 @@ public class Main {
         return null;
     }
 }
-

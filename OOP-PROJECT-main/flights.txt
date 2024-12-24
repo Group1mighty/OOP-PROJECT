@@ -1,0 +1,2 @@
+FID	OC	OAirName	OLocation	DC	DAirName	DLocation	DTime	ATime	Seats	Airplane ID	Airplane Model
+1	2	addi	addis	3	ada	adama	3;30	3:50	200	23	boing
